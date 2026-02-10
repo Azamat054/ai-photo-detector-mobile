@@ -2,7 +2,7 @@ import * as ImagePicker from "expo-image-picker";
 import { useState } from "react";
 import { Button, Image, Platform, StyleSheet, Text, View } from "react-native";
 
-const API_URL = "ai-photo-detector-backend-production.up.railway.app"; // ❗ замени на IP сервера
+const API_URL = "https://ai-photo-detector-backend-production.up.railway.app"; // ❗ замени на IP сервера
 
 export default function Test() {
   const [result, setResult] = useState(null);

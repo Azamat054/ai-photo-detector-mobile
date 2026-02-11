@@ -1,12 +1,21 @@
 import * as ImagePicker from "expo-image-picker";
 import { useState } from "react";
-import { Button, Image, Platform, StyleSheet, Text, View } from "react-native";
+import {
+  Button,
+  Image,
+  Platform,
+  StyleSheet,
+  Text,
+  View,
+  ActivityIndicator,
+} from "react-native";
 
-const API_URL = "https://ai-photo-detector-backend-production.up.railway.app"; // ❗ замени на IP сервера
+const API_URL = "https://ai-photo-detector-backend-production.up.railway.app";
 
 export default function Test() {
   const [result, setResult] = useState(null);
   const [preview, setPreview] = useState(null);
+  const [loading, setLoading] = useState(false);
 
   const pickImage = async () => {
     const res = await ImagePicker.launchImageLibraryAsync({
@@ -34,21 +43,19 @@ export default function Test() {
 
   const sendFile = async (file, endpoint) => {
     const data = new FormData();
+    setLoading(true);
+    setResult(null);
 
     try {
       if (Platform.OS === "web") {
         const resp = await fetch(file.uri);
         const blob = await resp.blob();
-        const name = file.fileName || (file.uri && file.uri.split("/").pop()) || "file";
+        const name = file.fileName || file.uri.split("/").pop() || "file";
         data.append("file", blob, name);
       } else {
-        const name = file.fileName || (file.uri && file.uri.split("/").pop()) || "file";
+        const name = file.fileName || file.uri.split("/").pop() || "file";
         const type = file.type || file.mimeType || "application/octet-stream";
-        data.append("file", {
-          uri: file.uri,
-          name,
-          type,
-        });
+        data.append("file", { uri: file.uri, name, type });
       }
 
       const response = await fetch(API_URL + endpoint, {
@@ -60,6 +67,8 @@ export default function Test() {
       setResult(json);
     } catch (err) {
       setResult({ error: err.message });
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -67,13 +76,22 @@ export default function Test() {
     <View style={styles.container}>
       <Text style={styles.title}>AI Detector</Text>
 
-      <Button title="📷 Выбрать фото" onPress={pickImage} />
+      <Button title="📷 Выбрать фото" onPress={pickImage} disabled={loading} />
       <View style={{ height: 10 }} />
-      <Button title="🎥 Выбрать видео" onPress={pickVideo} />
+      <Button title="🎥 Выбрать видео" onPress={pickVideo} disabled={loading} />
 
       {preview && <Image source={{ uri: preview }} style={styles.image} />}
 
-      {result && (
+      {loading && (
+        <View style={{ marginTop: 20 }}>
+          <ActivityIndicator size="large" />
+          <Text style={{ textAlign: "center", marginTop: 10 }}>
+            ⏳ Анализируем файл...
+          </Text>
+        </View>
+      )}
+
+      {!loading && result && (
         <Text style={styles.result}>
           {JSON.stringify(result, null, 2)}
         </Text>
